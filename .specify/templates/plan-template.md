@@ -31,7 +31,18 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify the following before proceeding (all are NON-NEGOTIABLE per constitution v1.0.0):
+
+- [ ] **N-Layer Architecture**: Feature uses controller / service / domain / repository /
+  dto / exceptions layers with no cross-layer leakage.
+- [ ] **API Versioning**: All new endpoints are under `/api/v{N}/`. Breaking changes
+  introduce a new version number.
+- [ ] **Testing**: Unit tests (service + domain, 80 % coverage gate) AND functional
+  tests (full HTTP stack) are planned for the feature.
+- [ ] **AOP Logging**: No `log.*` calls planned inside service/domain/repository classes.
+  Logging delegated to `LoggingAspect`.
+- [ ] **SOLID/DRY/YAGNI**: Every new class/interface traces to a concrete requirement.
+  Constructor injection used. No speculative abstractions.
 
 ## Project Structure
 
@@ -56,39 +67,25 @@ specs/[###-feature]/
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+# Option 1: Single Spring Boot service (DEFAULT for this project)
+src/main/java/com/example/userservice/
+├── controller/        # @RestController — versioned /api/v{N}/
+├── service/           # @Service interfaces + implementations
+├── domain/            # Entities, value objects (no framework deps)
+├── repository/        # Spring Data interfaces / custom impls
+├── dto/
+│   ├── request/       # Input DTOs
+│   └── response/      # Output DTOs
+├── exceptions/        # Custom exceptions + @ControllerAdvice handler
+└── aspect/            # AOP LoggingAspect
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+src/test/java/com/example/userservice/
+├── unit/              # Unit tests — mocked deps, @ExtendWith(MockitoExtension)
+└── functional/        # Functional tests — full HTTP stack, @SpringBootTest
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+# [REMOVE IF UNUSED] Option 2: Multi-module Maven/Gradle
+# Only introduce if there is a concrete requirement for a separate module.
+# YAGNI: do not create extra modules speculatively.
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real

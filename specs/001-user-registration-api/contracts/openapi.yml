@@ -1,0 +1,192 @@
+openapi: "3.0.3"
+info:
+  title: User Service API
+  description: |
+    REST API for user registration.
+    All endpoints are versioned under `/api/v{N}/`.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/v1/users:
+    post:
+      summary: Register a new user
+      description: |
+        Creates a new user record in memory. Returns `201` with the created user
+        (including auto-generated UUID) on success.
+
+        **Validation rules**:
+        - All five fields are required and must be non-blank.
+        - `telefono` must be exactly 10 digits and start with `09`.
+        - `correo` must be a valid email address (RFC 5322).
+        - `correo` must be unique (case-insensitive comparison).
+
+        **Error behaviour**:
+        - All field validation errors are returned together in a single `400` response.
+        - Uniqueness check only runs after all field validations pass.
+      operationId: registerUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            examples:
+              valid:
+                summary: Valid registration payload
+                value:
+                  nombre: "Juan"
+                  apellido: "Perez"
+                  direccion: "Calle 1 #23-45"
+                  telefono: "0912345678"
+                  correo: "juan@example.com"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              examples:
+                created:
+                  summary: Successful registration response
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    nombre: "Juan"
+                    apellido: "Perez"
+                    direccion: "Calle 1 #23-45"
+                    telefono: "0912345678"
+                    correo: "juan@example.com"
+        "400":
+          description: |
+            Bad request. Possible causes:
+            - One or more required fields are missing or blank (`es requerido`)
+            - `telefono` or `correo` has an invalid format (`formato invalido`)
+            - `correo` already registered (`usuario existente`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    message: "Validation failed"
+                    errors:
+                      - field: "nombre"
+                        message: "es requerido"
+                      - field: "correo"
+                        message: "es requerido"
+                invalid_phone:
+                  summary: Invalid telefono format
+                  value:
+                    message: "Validation failed"
+                    errors:
+                      - field: "telefono"
+                        message: "formato invalido"
+                combined_errors:
+                  summary: Missing field and format error combined
+                  value:
+                    message: "Validation failed"
+                    errors:
+                      - field: "nombre"
+                        message: "es requerido"
+                      - field: "telefono"
+                        message: "formato invalido"
+                duplicate_email:
+                  summary: Email already registered
+                  value:
+                    message: "usuario existente"
+                    errors: []
+
+components:
+  schemas:
+    CreateUserRequest:
+      type: object
+      required:
+        - nombre
+        - apellido
+        - direccion
+        - telefono
+        - correo
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          example: "Juan"
+          description: "User's first name. Must not be blank."
+        apellido:
+          type: string
+          minLength: 1
+          example: "Perez"
+          description: "User's last name. Must not be blank."
+        direccion:
+          type: string
+          minLength: 1
+          example: "Calle 1 #23-45"
+          description: "User's address. Must not be blank."
+        telefono:
+          type: string
+          pattern: "^09\\d{8}$"
+          example: "0912345678"
+          description: "User's phone number. Must be exactly 10 digits starting with 09."
+        correo:
+          type: string
+          format: email
+          example: "juan@example.com"
+          description: "User's email address. Must be valid and unique (case-insensitive)."
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: "Auto-generated UUID identifier."
+        nombre:
+          type: string
+          example: "Juan"
+        apellido:
+          type: string
+          example: "Perez"
+        direccion:
+          type: string
+          example: "Calle 1 #23-45"
+        telefono:
+          type: string
+          example: "0912345678"
+        correo:
+          type: string
+          example: "juan@example.com"
+          description: "Stored as lowercase-normalised value."
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Validation failed"
+          description: "Top-level error summary."
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+          description: "List of field-level errors. Empty for duplicate-email errors."
+
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          example: "nombre"
+          description: "Name of the offending field."
+        message:
+          type: string
+          example: "es requerido"
+          description: "Reason for the error. Values: 'es requerido' | 'formato invalido'."

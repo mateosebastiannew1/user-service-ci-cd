@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash .specify/extensions/git/scripts/bash/create-new-feature.sh --json --short-name \"user-registration-api\" \"user registration API\")",
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew dependencies:*)",
+      "Bash(./gradlew dependencyManagement)",
+      "Bash(./gradlew compileJava)",
+      "Bash(./gradlew dependencyInsight --dependency spring-boot-starter-webmvc-test --configuration testCompileClasspath)",
+      "Bash(jar tf:*)",
+      "Bash(./gradlew cleanTest test --exclude-task jacocoTestReport)",
+      "Bash(find 'C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\taller 1\\\\user-service\\\\build\\\\test-results' -name *.xml)",
+      "Bash(xargs grep:*)",
+      "Bash(./gradlew check:*)",
+      "Bash(./gradlew compileTestJava)",
+      "Bash(./gradlew clean:*)",
+      "Bash(./gradlew --stop)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(./gradlew compileJava compileTestJava)"
+    ]
+  }
+}
